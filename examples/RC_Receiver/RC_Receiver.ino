@@ -25,7 +25,7 @@
  *                from -90 to 90, and throttle as an integer percentage for
  *                both forwards and reverse.
  *
- *  Wiring:       Servo signals to pin 2 (steering) and pin 3 (throttle)
+ *  Wiring:       Servo signals to pin 32 (steering) and pin 35 (throttle)
  */
 
 #include <ServoInput.h>
@@ -33,31 +33,35 @@
 /* Signal pins for ServoInput MUST be interrupt-capable pins!
  *     Uno, Nano, Mini (328P): 2, 3
  *     Micro, Leonardo (32U4): 0, 1, 2, 3, 7
- *             Mega, Mega2560: 2, 3, 18, 19, 20, 21
+ *     Mega, Mega2560: 2, 3, 18, 19, 20, 21
+ *     Lolin32 (ESP32): all pins
  * Reference: https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
  */
 
 // Steering Setup
-const int SteeringSignalPin = 2;  // MUST be interrupt-capable!
-const int SteeringPulseMin = 1000;  // microseconds (us)
-const int SteeringPulseMax = 2000;  // Ideal values for your servo can be found with the "Calibration" example
+const int SteeringSignalPin = 32;  // MUST be interrupt-capable!
+const int SteeringPulseMin = 1277;  // microseconds (us)
+const int SteeringPulseMax = 1720;  // Ideal values for your servo can be found with the "Calibration" example
 
 ServoInputPin<SteeringSignalPin> steering(SteeringPulseMin, SteeringPulseMax);
 
-// Throttle Setup
-const int ThrottleSignalPin = 3;  // MUST be interrupt-capable!
-const int ThrottlePulseMin = 1000;  // microseconds (us)
-const int ThrottlePulseMax = 2000;  // Ideal values for your servo can be found with the "Calibration" example
+//Throttle Setup
+const int ThrottleSignalPin = 35;  // MUST be interrupt-capable!
+const int ThrottlePulseMin = 1196;  // microseconds (us)
+const int ThrottlePulseMax = 1807;  // Ideal values for your servo can be found with the "Calibration" example
 
 ServoInputPin<ThrottleSignalPin> throttle(ThrottlePulseMin, ThrottlePulseMax);
 
 void setup() {
 	Serial.begin(115200);
 
-	while (!ServoInput.available()) {  // wait for all signals to be ready
-		Serial.println("Waiting for servo signals...");
-		delay(500);
-	}
+	//attach interupts to servoinput lib as a workaround, as the internal interrupt setup doesn't work.
+    pinMode(SteeringSignalPin, INPUT_PULLUP);
+    pinMode(ThrottleSignalPin, INPUT_PULLUP);
+
+	//attach interupts to servoinput lib as a workaround, as the internal interrupt setup doesn't work.
+    attachInterrupt(digitalPinToInterrupt(SteeringSignalPin), steering.isr, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(ThrottleSignalPin), throttle.isr, CHANGE);
 }
 
 void loop() {
@@ -68,12 +72,21 @@ void loop() {
 	Serial.print(steeringAngle);
 	Serial.print("deg");
 
+	int steeringPulse = steering.getPulse();
+	Serial.print(" Pulseln: ");
+	Serial.print(steeringPulse);
+
+
 	Serial.print(" | ");  // separator
 
-	int throttlePercent = throttle.map(-100, 100);  // remap to a percentage both forward and reverse
+	int throttlePercent = throttle.map(100, -100);  // remap to a percentage both forward and reverse
 	Serial.print("Throttle: ");
 	Serial.print(throttlePercent);
 	Serial.print("% ");
+
+	int throttlePulse = throttle.getPulse();
+	Serial.print(" Pulseln: ");
+	Serial.print(throttlePulse);
 
 	if (throttlePercent >= 0) {
 		Serial.print("(Forward)");
