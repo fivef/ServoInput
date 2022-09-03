@@ -1,3 +1,7 @@
+# Changes in this fork
+This fork disables attaching the interrupt in the library as it was not working.
+See examples/RC_Receiver/RC_receiver.ino for example code which works with the forked version.
+
 # Servo Input Library
 [![arduino-library-badge](https://www.ardu-badge.com/badge/ServoInput.svg?)](https://www.ardu-badge.com/ServoInput) [![Build Status](https://github.com/dmadison/ServoInput/workflows/build/badge.svg?branch=master)](https://github.com/dmadison/ServoInput/actions?query=workflow%3Abuild)
 
